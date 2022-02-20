@@ -55,6 +55,22 @@ class Tagging:
                 transitions[source, target] = (count + alpha) / (tag_counts[key[0]] + alpha * total_tags)
         return transitions
 
+    def create_emission_matrix(self, alpha, tag_counts, emission_counts, vocab):
+        # todo: validate
+        num_tags = len(tag_counts)
+        num_words = len(vocab)
+        B = np.zeros((num_tags, num_words))
+        emis_keys = list(emission_counts.keys())
+        for i in range(num_tags):
+            for j in range(num_words):
+                count = 0
+                key = (emis_keys[i], emis_keys[j])
+                if key in emission_counts:
+                    count = emission_counts[key]
+                count_tag = tag_counts[key[0]]
+                B[i, j] = (count + alpha) / (count_tag + alpha * num_words)
+        return B
+
 if __name__ == '__main__':
     alpha = 0.001
     tagging = Tagging()
@@ -67,5 +83,5 @@ if __name__ == '__main__':
         vocab[word] = i
     emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
     states = sorted(tag_counts.keys())
-    transitions = tagging.create_transition_matrix(alpha, tag_counts, transition_counts)
-    transitions_sub = pd.DataFrame(transitions[30:35, 30:35], index=states[30:35], columns=states[30:35])
+    tagging.create_transition_matrix(alpha, tag_counts, transition_counts)
+    tagging.create_emission_matrix(alpha, tag_counts, emission_counts, list(vocab))

@@ -322,5 +322,203 @@ class TaggingTest(unittest.TestCase):
             self.assertEqual(True, np.allclose(result[0:5, 0:5], test_case["expected"]["0:5"]))
             self.assertEqual(True, np.allclose(result[30:35, 30:35], test_case["expected"]["30:35"]))
 
+    def test_create_emission_matrix(self):
+        # todo: update tests after validation
+        tagging = Tagging()
+        target = tagging.create_emission_matrix
+        with open("../../data/WSJ_02-21.pos", 'r') as f:
+            training_corpus = f.readlines()
+        with open("../../data/hmm_vocab.txt", 'r') as f:
+            voc_l = f.read().split('\n')
+        vocab = {}
+        for i, word in enumerate(sorted(voc_l)):
+            vocab[word] = i
+        emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
+        test_cases = [
+            {
+                "name": "default_check",
+                "input": {
+                    "alpha": 0.001,
+                    "tag_counts": tag_counts,
+                    "emission_counts": emission_counts,
+                    "vocab": vocab,
+                },
+                "expected": {
+                    "0:5": np.array(
+                        [
+                            [
+                                6.03219988e-06,
+                                6.03219988e-06,
+                                8.56578416e-01,
+                                6.03219988e-06,
+                                6.03219988e-06,
+                            ],
+                            [
+                                1.35212298e-07,
+                                1.35212298e-07,
+                                1.35212298e-07,
+                                9.71365280e-01,
+                                1.35212298e-07,
+                            ],
+                            [
+                                1.44034584e-07,
+                                1.44034584e-07,
+                                1.44034584e-07,
+                                1.44034584e-07,
+                                1.44034584e-07,
+                            ],
+                            [
+                                7.19539897e-07,
+                                7.19539897e-07,
+                                7.19539897e-07,
+                                7.19539897e-07,
+                                7.19539897e-07,
+                            ],
+                            [
+                                7.14399508e-07,
+                                7.14399508e-07,
+                                7.14399508e-07,
+                                7.14399508e-07,
+                                7.14399508e-07,
+                            ],
+                        ]
+                    ),
+                    "30:35": np.array(
+                        [
+                            [
+                                2.10625199e-06,
+                                2.10625199e-06,
+                                2.10625199e-06,
+                                2.10625199e-06,
+                                2.10625199e-06,
+                            ],
+                            [
+                                3.72331731e-07,
+                                3.72331731e-07,
+                                3.72331731e-07,
+                                3.72331731e-07,
+                                3.72331731e-07,
+                            ],
+                            [
+                                1.22283772e-05,
+                                1.22406055e-02,
+                                1.22283772e-05,
+                                1.22283772e-05,
+                                1.22283772e-05,
+                            ],
+                            [
+                                4.46812012e-08,
+                                4.46812012e-08,
+                                4.46812012e-08,
+                                4.46812012e-08,
+                                4.46812012e-08,
+                            ],
+                            [
+                                8.27972213e-06,
+                                4.96866125e-02,
+                                8.27972213e-06,
+                                8.27972213e-06,
+                                8.27972213e-06,
+                            ],
+                        ]
+                    ),
+                },
+            },
+            {
+                "name": "alpha_check",
+                "input": {
+                    "alpha": 0.05,
+                    "tag_counts": tag_counts,
+                    "emission_counts": emission_counts,
+                    "vocab": vocab,
+                },
+                "expected": {
+                    "0:5": np.array(
+                        [
+                            [
+                                3.75699741e-05,
+                                3.75699741e-05,
+                                1.06736296e-01,
+                                3.75699741e-05,
+                                3.75699741e-05,
+                            ],
+                            [
+                                5.84054154e-06,
+                                5.84054154e-06,
+                                5.84054154e-06,
+                                8.39174848e-01,
+                                5.84054154e-06,
+                            ],
+                            [
+                                6.16686298e-06,
+                                6.16686298e-06,
+                                6.16686298e-06,
+                                6.16686298e-06,
+                                6.16686298e-06,
+                            ],
+                            [
+                                1.95706206e-05,
+                                1.95706206e-05,
+                                1.95706206e-05,
+                                1.95706206e-05,
+                                1.95706206e-05,
+                            ],
+                            [
+                                1.94943174e-05,
+                                1.94943174e-05,
+                                1.94943174e-05,
+                                1.94943174e-05,
+                                1.94943174e-05,
+                            ],
+                        ]
+                    ),
+                    "30:35": np.array(
+                        [
+                            [
+                                3.04905937e-05,
+                                3.04905937e-05,
+                                3.04905937e-05,
+                                3.04905937e-05,
+                                3.04905937e-05,
+                            ],
+                            [
+                                1.29841464e-05,
+                                1.29841464e-05,
+                                1.29841464e-05,
+                                1.29841464e-05,
+                                1.29841464e-05,
+                            ],
+                            [
+                                4.01010547e-05,
+                                8.42122148e-04,
+                                4.01010547e-05,
+                                4.01010547e-05,
+                                4.01010547e-05,
+                            ],
+                            [
+                                2.12351646e-06,
+                                2.12351646e-06,
+                                2.12351646e-06,
+                                2.12351646e-06,
+                                2.12351646e-06,
+                            ],
+                            [
+                                3.88847844e-05,
+                                4.70505891e-03,
+                                3.88847844e-05,
+                                3.88847844e-05,
+                                3.88847844e-05,
+                            ],
+                        ]
+                    ),
+                },
+            },
+        ]
+        for test_case in test_cases:
+            result = target(**test_case["input"])
+            self.assertEqual(True, isinstance(result, np.ndarray))
+            self.assertEqual(True, np.allclose(result[0:5, 0:5], test_case["expected"]["0:5"]))
+            self.assertEqual(True, np.allclose(result[30:35, 30:35], test_case["expected"]["30:35"]))
+
 if __name__ == '__main__':
     unittest.main()
