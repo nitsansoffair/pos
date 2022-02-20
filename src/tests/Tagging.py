@@ -127,6 +127,7 @@ class TaggingTest(unittest.TestCase):
             self.assertEqual(True, np.isclose(result, test_case["expected"]))
 
     def test_create_transition_matrix(self):
+        # todo: update tests after validation
         tagging = Tagging()
         target = tagging.create_transition_matrix
         with open("../../data/WSJ_02-21.pos", 'r') as f:

@@ -45,16 +45,14 @@ class Tagging:
         return num_correct / total
 
     def create_transition_matrix(self, alpha, tag_counts, transition_counts):
-        # todo: fix functionality bug
-        all_tags, num_tags = list(tag_counts.keys()), len(tag_counts.keys())
-        transitions, trans_keys = np.zeros((num_tags, num_tags)), set(transition_counts.keys())
-        for row in range(num_tags):
-            for column in range(num_tags):
-                key = (all_tags[row], all_tags[column])
-                count = transition_counts[key] if key in trans_keys else 0
-                count_prev_tag = tag_counts[key[0]]
-                smoothed_count, smoothed_count_prev_tag = count + alpha, count_prev_tag + alpha * num_tags
-                transitions[row, column] = smoothed_count / smoothed_count_prev_tag
+        # todo: validate
+        tags_keys, total_tags = list(tag_counts.keys()), len(tag_counts.keys())
+        transitions = np.zeros((total_tags, total_tags))
+        for source in range(total_tags):
+            for target in range(total_tags):
+                key = (tags_keys[source], tags_keys[target])
+                count = transition_counts[key] if key in transition_counts.keys() else 0
+                transitions[source, target] = (count + alpha) / (tag_counts[key[0]] + alpha * total_tags)
         return transitions
 
 if __name__ == '__main__':
@@ -69,4 +67,5 @@ if __name__ == '__main__':
         vocab[word] = i
     emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
     states = sorted(tag_counts.keys())
-    tagging.create_transition_matrix(alpha, tag_counts, transition_counts)
+    transitions = tagging.create_transition_matrix(alpha, tag_counts, transition_counts)
+    transitions_sub = pd.DataFrame(transitions[30:35, 30:35], index=states[30:35], columns=states[30:35])
