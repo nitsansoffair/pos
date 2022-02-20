@@ -3,6 +3,7 @@ from collections import defaultdict
 
 import numpy as np
 
+from src.utilities.utils_pos import preprocess
 from src.Tagging import Tagging
 
 
@@ -82,7 +83,48 @@ class TaggingTest(unittest.TestCase):
             for k, v in test_case["expected"]["tag_counts"].items():
                 self.assertEqual(True, np.isclose(result_tag[k], v))
 
-
+    def test_predict_pos(self):
+        tagging = Tagging()
+        target = tagging.predict_pos
+        with open("../../data/WSJ_02-21.pos", 'r') as f:
+            training_corpus = f.readlines()
+        with open("../../data/hmm_vocab.txt", 'r') as f:
+            voc_l = f.read().split('\n')
+        with open("../../data/WSJ_24.pos", 'r') as f:
+            y = f.readlines()
+        vocab = {}
+        for i, word in enumerate(sorted(voc_l)):
+            vocab[word] = i
+        _, prep = preprocess(vocab, "../../data/test.words")
+        emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
+        states = sorted(tag_counts.keys())
+        test_cases = [
+            {
+                "name": "default_check",
+                "input": {
+                    "prep": prep,
+                    "y": y,
+                    "emission_counts": emission_counts,
+                    "vocab": vocab,
+                    "states": states,
+                },
+                "expected": 0.8888563993099213,
+            },
+            {
+                "name": "small_check",
+                "input": {
+                    "prep": prep[:1000],
+                    "y": y[:1000],
+                    "emission_counts": emission_counts,
+                    "vocab": vocab,
+                    "states": states,
+                },
+                "expected": 0.876,
+            },
+        ]
+        for test_case in test_cases:
+            result = target(**test_case["input"])
+            self.assertEqual(True, np.isclose(result, test_case["expected"]))
 
 if __name__ == '__main__':
     unittest.main()

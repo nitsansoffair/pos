@@ -19,3 +19,23 @@ class Tagging:
             tag_counts[tag] += 1
             prev_tag = tag
         return emission_counts, transition_counts, tag_counts
+
+    def predict_pos(self, prep, y, emission_counts, vocab, states):
+        num_correct, total = 0, len(y)
+        for word, y_tup in zip(prep, y):
+            y_tup_l = y_tup.split()
+            if len(y_tup_l) == 2:
+                true_label = y_tup_l[1]
+            else:
+                continue
+            pos_final, count_final = '', 0
+            if word in vocab:
+                for pos in states:
+                    key = (pos, word)
+                    if key in emission_counts.keys():
+                        count = emission_counts[key]
+                        if count > count_final:
+                            count_final, pos_final = count, key[0]
+                if pos_final == true_label:
+                    num_correct += 1
+        return num_correct / total
