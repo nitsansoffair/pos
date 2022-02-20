@@ -520,5 +520,97 @@ class TaggingTest(unittest.TestCase):
             self.assertEqual(True, np.allclose(result[0:5, 0:5], test_case["expected"]["0:5"]))
             self.assertEqual(True, np.allclose(result[30:35, 30:35], test_case["expected"]["30:35"]))
 
+    def test_initialize(self):
+        # todo: update tests after validation
+        tagging = Tagging()
+        target = tagging.initialize
+        with open("../../data/WSJ_02-21.pos", 'r') as f:
+            training_corpus = f.readlines()
+        with open("../../data/hmm_vocab.txt", 'r') as f:
+            voc_l = f.read().split('\n')
+        vocab = {}
+        for i, word in enumerate(sorted(voc_l)):
+            vocab[word] = i
+        _, corpus = preprocess(vocab, "../../data/test.words")
+        emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
+        A = tagging.create_transition_matrix(0.001, tag_counts, transition_counts)
+        B = tagging.create_emission_matrix(0.001, tag_counts, emission_counts, list(vocab))
+        states = tag_counts.keys()
+        test_cases = [
+            {
+                "name": "default_check",
+                "input": {
+                    "states": states,
+                    "tag_counts": tag_counts,
+                    "A": A,
+                    "B": B,
+                    "corpus": corpus,
+                    "vocab": vocab,
+                },
+                "expected": {
+                    "best_probs_shape": (46, 34199),
+                    "best_paths_shape": (46, 34199),
+                    "best_probs_col0": np.array(
+                        [
+                            -22.60982633,
+                            -23.07660654,
+                            -23.57298822,
+                            -19.76726066,
+                            -24.74325104,
+                            -35.20241402,
+                            -35.00096024,
+                            -34.99203854,
+                            -21.35069072,
+                            -19.85767814,
+                            -21.92098414,
+                            -4.01623741,
+                            -19.16380593,
+                            -21.1062242,
+                            -20.47163973,
+                            -21.10157273,
+                            -21.49584851,
+                            -20.4811853,
+                            -18.25856307,
+                            -23.39717471,
+                            -21.92146798,
+                            -9.41377777,
+                            -21.03053445,
+                            -21.08029591,
+                            -20.10863677,
+                            -33.48185979,
+                            -19.47301382,
+                            -20.77150242,
+                            -20.11727696,
+                            -20.56031676,
+                            -20.57193964,
+                            -32.30366295,
+                            -18.07551522,
+                            -22.58887909,
+                            -19.1585905,
+                            -16.02994331,
+                            -24.30968545,
+                            -20.92932218,
+                            -21.96797222,
+                            -24.29571895,
+                            -23.45968569,
+                            -22.43665883,
+                            -20.46568904,
+                            -22.75551606,
+                            -19.6637215,
+                            -18.36288463,
+                        ]
+                    ),
+                },
+            }
+        ]
+        for test_case in test_cases:
+            result_best_probs, result_best_paths = target(**test_case["input"])
+            self.assertEqual(True, isinstance(result_best_probs, np.ndarray))
+            self.assertEqual(True, isinstance(result_best_paths, np.ndarray))
+            self.assertEqual(True, result_best_probs.shape == test_case["expected"]["best_probs_shape"])
+            self.assertEqual(True, result_best_paths.shape == test_case["expected"]["best_paths_shape"])
+            self.assertEqual(True, np.allclose(result_best_probs[:, 0], test_case["expected"]["best_probs_col0"]))
+            self.assertEqual(True, np.all((result_best_paths == 0)))
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,7 +1,7 @@
 from collections import defaultdict
+from math import log
 
 import numpy as np
-import pandas as pd
 
 from src.utilities.utils_pos import get_word_tag, preprocess
 
@@ -71,6 +71,18 @@ class Tagging:
                 B[i, j] = (count + alpha) / (count_tag + alpha * num_words)
         return B
 
+    def initialize(self, states, tag_counts, A, B, corpus, vocab):
+        # todo: validate
+        num_tags = len(tag_counts)
+        best_probs = np.zeros((num_tags, len(corpus)))
+        best_paths = np.zeros((num_tags, len(corpus)), dtype=int)
+        for i in range(num_tags // 2):
+            if A[0, i] == 0:
+                best_probs[i, 0] = float("-inf")
+            else:
+                best_probs[i, 0] = log(A[0, i] + B[0, vocab[corpus[0]]]) if A[0, i] != 0 else float('-inf')
+        return best_probs, best_paths
+
 if __name__ == '__main__':
     alpha = 0.001
     tagging = Tagging()
@@ -81,7 +93,9 @@ if __name__ == '__main__':
     vocab = {}
     for i, word in enumerate(sorted(voc_l)):
         vocab[word] = i
+    _, prep = preprocess(vocab, "../data/test.words")
     emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
     states = sorted(tag_counts.keys())
-    tagging.create_transition_matrix(alpha, tag_counts, transition_counts)
-    tagging.create_emission_matrix(alpha, tag_counts, emission_counts, list(vocab))
+    A = tagging.create_transition_matrix(alpha, tag_counts, transition_counts)
+    B = tagging.create_emission_matrix(alpha, tag_counts, emission_counts, list(vocab))
+    best_probs, best_paths = tagging.initialize(states, tag_counts, A, B, prep, vocab)
