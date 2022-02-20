@@ -1,4 +1,8 @@
 from collections import defaultdict
+
+import numpy as np
+import pandas as pd
+
 from src.utilities.utils_pos import get_word_tag, preprocess
 
 class Tagging:
@@ -39,3 +43,30 @@ class Tagging:
                 if pos_final == true_label:
                     num_correct += 1
         return num_correct / total
+
+    def create_transition_matrix(self, alpha, tag_counts, transition_counts):
+        # todo: fix functionality bug
+        all_tags, num_tags = list(tag_counts.keys()), len(tag_counts.keys())
+        transitions, trans_keys = np.zeros((num_tags, num_tags)), set(transition_counts.keys())
+        for row in range(num_tags):
+            for column in range(num_tags):
+                key = (all_tags[row], all_tags[column])
+                count = transition_counts[key] if key in trans_keys else 0
+                count_prev_tag = tag_counts[key[0]]
+                smoothed_count, smoothed_count_prev_tag = count + alpha, count_prev_tag + alpha * num_tags
+                transitions[row, column] = smoothed_count / smoothed_count_prev_tag
+        return transitions
+
+if __name__ == '__main__':
+    alpha = 0.001
+    tagging = Tagging()
+    with open("../data/WSJ_02-21.pos", 'r') as f:
+        training_corpus = f.readlines()
+    with open("../data/hmm_vocab.txt", 'r') as f:
+        voc_l = f.read().split('\n')
+    vocab = {}
+    for i, word in enumerate(sorted(voc_l)):
+        vocab[word] = i
+    emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
+    states = sorted(tag_counts.keys())
+    tagging.create_transition_matrix(alpha, tag_counts, transition_counts)
