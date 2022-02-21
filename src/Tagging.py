@@ -9,11 +9,11 @@ class Tagging:
     def __init__(self):
         pass
 
-    def create_dictionaries(self, corpus, vocab, verbose=False):
+    def create_dictionaries(self, training_corpus, vocab, verbose=False):
         emission_counts, transition_counts, tag_counts = defaultdict(int), defaultdict(int), defaultdict(int)
         prev_tag = '--s--'
         i = 0
-        for word_tag in corpus:
+        for word_tag in training_corpus:
             i += 1
             if i % 50000 == 0 and verbose:
                 print(f"word count = {i}")
@@ -45,7 +45,6 @@ class Tagging:
         return num_correct / total
 
     def create_transition_matrix(self, alpha, tag_counts, transition_counts):
-        # todo: validate
         tags_keys, total_tags = list(tag_counts.keys()), len(tag_counts.keys())
         transitions = np.zeros((total_tags, total_tags))
         for source in range(total_tags):
@@ -98,6 +97,24 @@ class Tagging:
                 best_paths[tag, word] = best_path
         return best_probs, best_paths
 
+    def viterbi_backward(self, best_probs, best_paths, corpus, states):
+        # todo: complete implementation
+        m = best_paths.shape[1]
+        z = [None] * m
+        num_tags = best_probs.shape[0]
+        best_prob_for_last_word = float('-inf')
+        pred = [None] * m
+        for tag in range(num_tags):
+            if best_probs[tag] > best_prob_for_last_word:
+                best_prob_for_last_word = best_probs[tag]
+                z[m - 1] = corpus[tag]
+        pred[m - 1] = states[z[m - 1]]
+        for i in range(len(corpus), 1, 0):
+            pos_tag_for_word_i = corpus[i]
+            z[i - 1] = best_paths[states[i], corpus[i]]
+            pred[i - 1] = states[corpus[i]]
+        return pred
+
 if __name__ == '__main__':
     alpha = 0.001
     tagging = Tagging()
@@ -113,7 +130,8 @@ if __name__ == '__main__':
     _, corpus = preprocess(vocab, "../data/test.words")
     emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(testing_corpus, vocab)
     states = sorted(tag_counts.keys())
-    A = tagging.create_transition_matrix(alpha, tag_counts, transition_counts)
-    B = tagging.create_emission_matrix(alpha, tag_counts, emission_counts, vocab)
-    best_probs, best_paths = tagging.initialize(states, tag_counts, A, B, corpus, vocab)
-    tagging.viterbi_forward(A, B, corpus, best_probs, best_paths, vocab)
+    transitions = tagging.create_transition_matrix(alpha, tag_counts, transition_counts)
+    emission_matrix = tagging.create_emission_matrix(alpha, tag_counts, emission_counts, vocab)
+    best_probs, best_paths = tagging.initialize(states, tag_counts, transitions, emission_matrix, corpus, vocab)
+    tagging.viterbi_forward(transitions, emission_matrix, corpus, best_probs, best_paths, vocab)
+    tagging.viterbi_backward(best_probs, best_paths, corpus, states)

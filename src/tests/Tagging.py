@@ -5,6 +5,7 @@ from collections import defaultdict
 import numpy as np
 
 from src.utilities.utils_pos import preprocess
+
 from src.Tagging import Tagging
 
 
@@ -76,7 +77,7 @@ class TaggingTest(unittest.TestCase):
             for k, v in test_case["expected"]["emission_counts"].items():
                 self.assertEqual(True, np.isclose(result_emission[k], v))
             self.assertEqual(True, isinstance(result_transition, defaultdict))
-            self.assertEqual (True, len(result_transition) == test_case["expected"]["len_transition_counts"])
+            self.assertEqual(True, len(result_transition) == test_case["expected"]["len_transition_counts"])
             for k, v in test_case["expected"]["transition_counts"].items():
                 self.assertEqual(True, np.isclose(result_transition[k], v))
             self.assertEqual(True, isinstance(result_tag, defaultdict))
@@ -128,7 +129,6 @@ class TaggingTest(unittest.TestCase):
             self.assertEqual(True, np.isclose(result, test_case["expected"]))
 
     def test_create_transition_matrix(self):
-        # todo: update tests after validation
         tagging = Tagging()
         target = tagging.create_transition_matrix
         with open("../../data/WSJ_24.pos", 'r') as f:
@@ -148,83 +148,22 @@ class TaggingTest(unittest.TestCase):
                     "transition_counts": transition_counts,
                 },
                 "expected": {
-                    "0:5": np.array(
-                        [
-                            [
-                                7.03997297e-06,
-                                7.03997297e-06,
-                                7.03997297e-06,
-                                7.03997297e-06,
-                                7.03997297e-06,
-                            ],
-                            [
-                                1.35647553e-07,
-                                1.35647553e-07,
-                                1.35647553e-07,
-                                1.35647553e-07,
-                                1.35647553e-07,
-                            ],
-                            [
-                                1.44528595e-07,
-                                1.44673124e-04,
-                                6.93751711e-03,
-                                6.79298851e-03,
-                                5.05864537e-03,
-                            ],
-                            [
-                                7.32039770e-07,
-                                1.69101919e-01,
-                                7.32039770e-07,
-                                7.32039770e-07,
-                                7.32039770e-07,
-                            ],
-                            [
-                                7.26719892e-07,
-                                7.27446612e-04,
-                                7.26719892e-07,
-                                7.27446612e-04,
-                                7.26719892e-07,
-                            ],
-                        ]
-                    ),
+                    "0:5": [[3.50484551e-04, 4.50973479e-01, 3.50134417e-07, 7.00618968e-04, 3.50134417e-07],
+                            [7.04705480e-03, 1.25081534e-01, 1.95992289e-02, 1.87183746e-02, 2.42256960e-03],
+                            [3.34396715e-06, 5.08286351e-01, 3.34396715e-06, 3.34396715e-06, 3.34396715e-06],
+                            [5.90185403e-03, 5.90185403e-03, 2.94945229e-06, 2.94945229e-06, 7.90456162e-01],
+                            [2.09892421e-01, 6.03942791e-02, 9.90053918e-07, 9.90053918e-07, 7.92142140e-03]],
                     "30:35": np.array(
-                        [
-                            [
-                                2.21706877e-06,
-                                2.21706877e-06,
-                                2.21706877e-06,
-                                8.87049214e-03,
-                                2.21706877e-06,
-                            ],
-                            [
-                                3.75650909e-07,
-                                7.51677469e-04,
-                                3.75650909e-07,
-                                5.10888993e-02,
-                                3.75650909e-07,
-                            ],
-                            [
-                                1.72277159e-05,
-                                1.72277159e-05,
-                                1.72277159e-05,
-                                1.72277159e-05,
-                                1.72277159e-05,
-                            ],
-                            [
-                                4.47733569e-05,
-                                4.47286283e-08,
-                                4.47286283e-08,
-                                8.95019852e-05,
-                                4.47733569e-05,
-                            ],
-                            [
-                                1.03043917e-05,
-                                1.03043917e-05,
-                                1.03043917e-05,
-                                6.18366548e-02,
-                                3.09234796e-02,
-                            ],
-                        ]
+                        [[1.85027569e-05, 1.85027569e-05, 1.85027569e-05, 1.85027569e-05,
+                          1.85027569e-05],
+                         [1.11054350e-05, 1.11054350e-05, 1.11165404e-02, 1.11054350e-05,
+                          1.11054350e-05],
+                         [1.07473723e-05, 1.07473723e-05, 1.07473723e-05, 1.07473723e-05,
+                          1.07473723e-05],
+                         [8.12704192e-06, 8.12704192e-06, 8.13516896e-03, 8.12704192e-06,
+                          8.12704192e-06],
+                         [1.14881787e-05, 1.14881787e-05, 1.14996668e-02, 1.14881787e-05,
+                          1.14881787e-05]]
                     ),
                 },
             },
@@ -236,84 +175,25 @@ class TaggingTest(unittest.TestCase):
                     "transition_counts": transition_counts,
                 },
                 "expected": {
-                    "0:5": np.array(
-                        [
-                            [
-                                3.46500347e-04,
-                                3.46500347e-04,
-                                3.46500347e-04,
-                                3.46500347e-04,
-                                3.46500347e-04,
-                            ],
-                            [
-                                6.78030457e-06,
-                                6.78030457e-06,
-                                6.78030457e-06,
-                                6.78030457e-06,
-                                6.78030457e-06,
-                            ],
-                            [
-                                7.22407640e-06,
-                                1.51705604e-04,
-                                6.94233742e-03,
-                                6.79785589e-03,
-                                5.06407756e-03,
-                            ],
-                            [
-                                3.65416941e-05,
-                                1.68859168e-01,
-                                3.65416941e-05,
-                                3.65416941e-05,
-                                3.65416941e-05,
-                            ],
-                            [
-                                3.62765726e-05,
-                                7.61808024e-04,
-                                3.62765726e-05,
-                                7.61808024e-04,
-                                3.62765726e-05,
-                            ],
-                        ]
-                    ),
-                    "30:35": np.array(
-                        [
-                            [
-                                1.10302228e-04,
-                                1.10302228e-04,
-                                1.10302228e-04,
-                                8.93448048e-03,
-                                1.10302228e-04,
-                            ],
-                            [
-                                1.87666554e-05,
-                                7.69432872e-04,
-                                1.87666554e-05,
-                                5.10640694e-02,
-                                1.87666554e-05,
-                            ],
-                            [
-                                8.29187396e-04,
-                                8.29187396e-04,
-                                8.29187396e-04,
-                                8.29187396e-04,
-                                8.29187396e-04,
-                            ],
-                            [
-                                4.69603252e-05,
-                                2.23620596e-06,
-                                2.23620596e-06,
-                                9.16844445e-05,
-                                4.69603252e-05,
-                            ],
-                            [
-                                5.03524673e-04,
-                                5.03524673e-04,
-                                5.03524673e-04,
-                                6.09264854e-02,
-                                3.07150050e-02,
-                            ],
-                        ]
-                    ),
+                    "0:5":
+                        [[3.67351223e-04, 4.50634993e-01, 1.74929154e-05, 7.17209530e-04,
+                          1.74929154e-05],
+                         [7.05434376e-03, 1.25030264e-01, 1.96002905e-02, 1.87198732e-02,
+                          2.43215284e-03],
+                         [1.65947561e-04, 5.04646532e-01, 1.65947561e-04, 1.65947561e-04,
+                          1.65947561e-04],
+                         [6.00644594e-03,
+                          6.00644594e-03,
+                          1.46498682e-04,
+                          1.46498682e-04,
+                          7.85379432e-01],
+                         [2.09473476e-01, 6.03082090e-02, 4.93924726e-05, 4.93924726e-05,
+                          7.95218809e-03]],
+                    "30:35": [[0.0008881, 0.0008881, 0.0008881, 0.0008881, 0.0008881],
+                              [0.00054171, 0.00054171, 0.01137595, 0.00054171, 0.00054171],
+                              [0.00052466, 0.00052466, 0.00052466, 0.00052466, 0.00052466],
+                              [0.00039904, 0.00039904, 0.00837989, 0.00039904, 0.00039904],
+                              [0.00055991, 0.00055991, 0.01175812, 0.00055991, 0.00055991]],
                 },
             },
         ]
@@ -750,9 +630,12 @@ class TaggingTest(unittest.TestCase):
             self.assertEqual(True, isinstance(result_best_probs, np.ndarray))
             self.assertEqual(True, isinstance(result_best_paths, np.ndarray))
             self.assertEqual(True, np.allclose(result_best_probs[0:5, 0:5], test_case["expected"]["best_probs0:5"]))
-            self.assertEqual(True, np.allclose(result_best_probs[30:35, 30:35], test_case["expected"]["best_probs30:35"],))
-            self.assertEqual(True, np.allclose(result_best_paths[0:5, 0:5], test_case["expected"]["best_paths0:5"],))
-            self.assertEqual(True, np.allclose(result_best_paths[30:35, 30:35], test_case["expected"]["best_paths30:35"]))
+            self.assertEqual(True,
+                             np.allclose(result_best_probs[30:35, 30:35], test_case["expected"]["best_probs30:35"], ))
+            self.assertEqual(True, np.allclose(result_best_paths[0:5, 0:5], test_case["expected"]["best_paths0:5"], ))
+            self.assertEqual(True,
+                             np.allclose(result_best_paths[30:35, 30:35], test_case["expected"]["best_paths30:35"]))
+
 
 if __name__ == '__main__':
     unittest.main()
