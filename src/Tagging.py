@@ -79,7 +79,6 @@ class Tagging:
         return best_probs, best_paths
 
     def viterbi_forward(self, A, B, test_corpus, best_probs, best_paths, vocab, verbose=True):
-        # todo: validate
         num_tags = best_probs.shape[0]
         for word in range(1, len(vocab)):
             if word % 5000 == 0 and verbose:
@@ -90,7 +89,7 @@ class Tagging:
                     prob = best_probs[previous_tag, word - 1] + log(A[previous_tag, tag]) + log(B[tag, word])
                     if prob > best_prob:
                         best_prob = prob
-                        best_path = best_paths[previous_tag, word]
+                        best_path = previous_tag
                 best_probs[tag, word] = best_prob
                 best_paths[tag, word] = best_path
         return best_probs, best_paths
