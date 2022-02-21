@@ -9,11 +9,11 @@ class Tagging:
     def __init__(self):
         pass
 
-    def create_dictionaries(self, training_corpus, vocab, verbose=False):
+    def create_dictionaries(self, corpus, vocab, verbose=False):
         emission_counts, transition_counts, tag_counts = defaultdict(int), defaultdict(int), defaultdict(int)
         prev_tag = '--s--'
         i = 0
-        for word_tag in training_corpus:
+        for word_tag in corpus:
             i += 1
             if i % 50000 == 0 and verbose:
                 print(f"word count = {i}")
@@ -57,17 +57,14 @@ class Tagging:
 
     def create_emission_matrix(self, alpha, tag_counts, emission_counts, vocab):
         # todo: validate
-        num_tags = len(tag_counts)
-        num_words = len(vocab)
+        num_tags, num_words = len(tag_counts), len(vocab.keys())
         B = np.zeros((num_tags, num_words))
-        emis_keys = list(emission_counts.keys())
+        emis_keys, vocab_keys = list(emission_counts.keys()), list(vocab.keys())
         for i in range(num_tags):
             for j in range(num_words):
-                count = 0
-                key = (emis_keys[i], emis_keys[j])
-                if key in emission_counts:
-                    count = emission_counts[key]
-                count_tag = tag_counts[key[0]]
+                key = (emis_keys[i][0], vocab_keys[j])
+                count = emission_counts[key] if key in emission_counts else 0
+                count_tag = tag_counts[emis_keys[i][0]]
                 B[i, j] = (count + alpha) / (count_tag + alpha * num_words)
         return B
 
@@ -76,11 +73,29 @@ class Tagging:
         num_tags = len(tag_counts)
         best_probs = np.zeros((num_tags, len(corpus)))
         best_paths = np.zeros((num_tags, len(corpus)), dtype=int)
-        for i in range(num_tags // 2):
+        s_idx = states.index("--s--")
+        for i in range(num_tags):
             if A[0, i] == 0:
                 best_probs[i, 0] = float("-inf")
             else:
-                best_probs[i, 0] = log(A[0, i] + B[0, vocab[corpus[0]]]) if A[0, i] != 0 else float('-inf')
+                best_probs[i, 0] = log(A[s_idx, i] + B[i, vocab[corpus[0]]]) if A[s_idx, i] != 0 else float('-inf')
+        return best_probs, best_paths
+
+    def viterbi_forward(self, A, B, test_corpus, best_probs, best_paths, vocab, verbose=True):
+        # todo: validate
+        num_tags = best_probs.shape[0]
+        for word in range(1, len(vocab)):
+            if word % 5000 == 0 and verbose:
+                print("Words processed: {:>8}".format(word))
+            for tag in range(num_tags):
+                best_prob, best_path = float("-inf"), None
+                for previous_tag in range(num_tags):
+                    prob = best_probs[previous_tag, word - 1] + log(A[previous_tag, tag]) + log(B[tag, word])
+                    if prob > best_prob:
+                        best_prob = prob
+                        best_path = best_paths[previous_tag, word]
+                best_probs[tag, word] = best_prob
+                best_paths[tag, word] = best_path
         return best_probs, best_paths
 
 if __name__ == '__main__':
@@ -88,14 +103,17 @@ if __name__ == '__main__':
     tagging = Tagging()
     with open("../data/WSJ_02-21.pos", 'r') as f:
         training_corpus = f.readlines()
+    with open("../data/WSJ_24.pos", 'r') as f:
+        testing_corpus = f.readlines()
     with open("../data/hmm_vocab.txt", 'r') as f:
         voc_l = f.read().split('\n')
     vocab = {}
     for i, word in enumerate(sorted(voc_l)):
         vocab[word] = i
-    _, prep = preprocess(vocab, "../data/test.words")
-    emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
+    _, corpus = preprocess(vocab, "../data/test.words")
+    emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(testing_corpus, vocab)
     states = sorted(tag_counts.keys())
     A = tagging.create_transition_matrix(alpha, tag_counts, transition_counts)
-    B = tagging.create_emission_matrix(alpha, tag_counts, emission_counts, list(vocab))
-    best_probs, best_paths = tagging.initialize(states, tag_counts, A, B, prep, vocab)
+    B = tagging.create_emission_matrix(alpha, tag_counts, emission_counts, vocab)
+    best_probs, best_paths = tagging.initialize(states, tag_counts, A, B, corpus, vocab)
+    tagging.viterbi_forward(A, B, corpus, best_probs, best_paths, vocab)

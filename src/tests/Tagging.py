@@ -1,3 +1,4 @@
+import pickle
 import unittest
 from collections import defaultdict
 
@@ -130,14 +131,14 @@ class TaggingTest(unittest.TestCase):
         # todo: update tests after validation
         tagging = Tagging()
         target = tagging.create_transition_matrix
-        with open("../../data/WSJ_02-21.pos", 'r') as f:
-            training_corpus = f.readlines()
+        with open("../../data/WSJ_24.pos", 'r') as f:
+            testing_corpus = f.readlines()
         with open("../../data/hmm_vocab.txt", 'r') as f:
             voc_l = f.read().split('\n')
         vocab = {}
         for i, word in enumerate(sorted(voc_l)):
             vocab[word] = i
-        _, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
+        _, transition_counts, tag_counts = tagging.create_dictionaries(testing_corpus, vocab)
         test_cases = [
             {
                 "name": "default_check",
@@ -326,14 +327,15 @@ class TaggingTest(unittest.TestCase):
         # todo: update tests after validation
         tagging = Tagging()
         target = tagging.create_emission_matrix
-        with open("../../data/WSJ_02-21.pos", 'r') as f:
-            training_corpus = f.readlines()
+        with open("../../data/WSJ_24.pos", 'r') as f:
+            testing_corpus = f.readlines()
         with open("../../data/hmm_vocab.txt", 'r') as f:
             voc_l = f.read().split('\n')
         vocab = {}
         for i, word in enumerate(sorted(voc_l)):
             vocab[word] = i
-        emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
+        _, prep = preprocess(vocab, "../../data/test.words")
+        emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(testing_corpus, vocab)
         test_cases = [
             {
                 "name": "default_check",
@@ -524,17 +526,17 @@ class TaggingTest(unittest.TestCase):
         # todo: update tests after validation
         tagging = Tagging()
         target = tagging.initialize
-        with open("../../data/WSJ_02-21.pos", 'r') as f:
-            training_corpus = f.readlines()
+        with open("../../data/WSJ_24.pos", 'r') as f:
+            testing_corpus = f.readlines()
         with open("../../data/hmm_vocab.txt", 'r') as f:
             voc_l = f.read().split('\n')
         vocab = {}
         for i, word in enumerate(sorted(voc_l)):
             vocab[word] = i
         _, corpus = preprocess(vocab, "../../data/test.words")
-        emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
+        emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(testing_corpus, vocab)
         A = tagging.create_transition_matrix(0.001, tag_counts, transition_counts)
-        B = tagging.create_emission_matrix(0.001, tag_counts, emission_counts, list(vocab))
+        B = tagging.create_emission_matrix(0.001, tag_counts, emission_counts, vocab)
         states = tag_counts.keys()
         test_cases = [
             {
@@ -611,6 +613,146 @@ class TaggingTest(unittest.TestCase):
             self.assertEqual(True, result_best_paths.shape == test_case["expected"]["best_paths_shape"])
             self.assertEqual(True, np.allclose(result_best_probs[:, 0], test_case["expected"]["best_probs_col0"]))
             self.assertEqual(True, np.all((result_best_paths == 0)))
+
+    def test_viterbi_forward(self):
+        # todo: update tests after validation
+        tagging = Tagging()
+        target = tagging.viterbi_forward
+        with open("../../data/WSJ_02-21.pos", 'r') as f:
+            training_corpus = f.readlines()
+        with open("../../data/hmm_vocab.txt", 'r') as f:
+            voc_l = f.read().split('\n')
+        vocab = {}
+        for i, word in enumerate(sorted(voc_l)):
+            vocab[word] = i
+        _, test_corpus = preprocess(vocab, "../../data/test.words")
+        emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
+        A = tagging.create_transition_matrix(0.001, tag_counts, transition_counts)
+        B = tagging.create_emission_matrix(0.001, tag_counts, emission_counts, vocab)
+        test_cases = [
+            {
+                "name": "default_check",
+                "input": {
+                    "A": A,
+                    "B": B,
+                    "test_corpus": test_corpus,
+                    "best_probs": pickle.load(
+                        open("../../support_files/best_probs_initilized.pkl", "rb")
+                    ),
+                    "best_paths": pickle.load(
+                        open("../../support_files/best_paths_initilized.pkl", "rb")
+                    ),
+                    "vocab": vocab,
+                    "verbose": False,
+                },
+                "expected": {
+                    "best_probs0:5": np.array(
+                        [
+                            [
+                                -22.60982633,
+                                -24.78215633,
+                                -34.08246498,
+                                -34.34107105,
+                                -49.56012613,
+                            ],
+                            [
+                                -23.07660654,
+                                -24.51583896,
+                                -35.04774303,
+                                -35.28281026,
+                                -50.52540418,
+                            ],
+                            [
+                                -23.57298822,
+                                -29.98305064,
+                                -31.98004656,
+                                -38.99187549,
+                                -47.45770771,
+                            ],
+                            [
+                                -19.76726066,
+                                -25.7122143,
+                                -31.54577612,
+                                -37.38331695,
+                                -47.02343727,
+                            ],
+                            [
+                                -24.74325104,
+                                -28.78696025,
+                                -31.458494,
+                                -36.00456711,
+                                -46.93615515,
+                            ],
+                        ]
+                    ),
+                    "best_probs30:35": np.array(
+                        [
+                            [
+                                -202.75618827,
+                                -208.38838519,
+                                -210.46938402,
+                                -210.15943098,
+                                -223.79223672,
+                            ],
+                            [
+                                -202.58297597,
+                                -217.72266765,
+                                -207.23725672,
+                                -215.529735,
+                                -224.13957203,
+                            ],
+                            [
+                                -202.00878092,
+                                -214.23093833,
+                                -217.41021623,
+                                -220.73768708,
+                                -222.03338753,
+                            ],
+                            [
+                                -200.44016117,
+                                -209.46937757,
+                                -209.06951664,
+                                -216.22297765,
+                                -221.09669653,
+                            ],
+                            [
+                                -208.74189499,
+                                -214.62088817,
+                                -209.79346523,
+                                -213.52623459,
+                                -228.70417526,
+                            ],
+                        ]
+                    ),
+                    "best_paths0:5": np.array(
+                        [
+                            [0, 11, 20, 25, 20],
+                            [0, 11, 20, 25, 20],
+                            [0, 11, 20, 25, 20],
+                            [0, 11, 20, 25, 20],
+                            [0, 11, 20, 25, 20],
+                        ]
+                    ),
+                    "best_paths30:35": np.array(
+                        [
+                            [20, 19, 35, 11, 21],
+                            [20, 19, 35, 11, 21],
+                            [20, 19, 35, 11, 21],
+                            [20, 19, 35, 11, 21],
+                            [35, 19, 35, 11, 34],
+                        ]
+                    ),
+                },
+            }
+        ]
+        for test_case in test_cases:
+            result_best_probs, result_best_paths = target(**test_case["input"])
+            self.assertEqual(True, isinstance(result_best_probs, np.ndarray))
+            self.assertEqual(True, isinstance(result_best_paths, np.ndarray))
+            self.assertEqual(True, np.allclose(result_best_probs[0:5, 0:5], test_case["expected"]["best_probs0:5"]))
+            self.assertEqual(True, np.allclose(result_best_probs[30:35, 30:35], test_case["expected"]["best_probs30:35"],))
+            self.assertEqual(True, np.allclose(result_best_paths[0:5, 0:5], test_case["expected"]["best_paths0:5"],))
+            self.assertEqual(True, np.allclose(result_best_paths[30:35, 30:35], test_case["expected"]["best_paths30:35"]))
 
 if __name__ == '__main__':
     unittest.main()
