@@ -45,26 +45,33 @@ class Tagging:
         return num_correct / total
 
     def create_transition_matrix(self, alpha, tag_counts, transition_counts):
+        # todo: fix this function
         tags_keys, total_tags = list(tag_counts.keys()), len(tag_counts.keys())
         transitions = np.zeros((total_tags, total_tags))
         for source in range(total_tags):
+            row_sum = 0
             for target in range(total_tags):
                 key = (tags_keys[source], tags_keys[target])
                 count = transition_counts[key] if key in transition_counts.keys() else 0
-                transitions[source, target] = (count + alpha) / (tag_counts[key[0]] + alpha * total_tags)
+                transitions[source, target] = count + alpha
+                row_sum += transitions[source, target]
+            transitions[source, :] /= row_sum
         return transitions
 
     def create_emission_matrix(self, alpha, tag_counts, emission_counts, vocab):
+        # todo: fix this function
         num_tags, num_words = len(tag_counts), len(vocab.keys())
-        B = np.zeros((num_tags, num_words))
+        emission_matrix = np.zeros((num_tags, num_words))
         emis_keys, vocab_keys = list(emission_counts.keys()), list(vocab.keys())
-        for i in range(num_tags):
-            for j in range(num_words):
-                key = (emis_keys[i][0], vocab_keys[j])
+        for tag in range(num_tags):
+            sum_rows = 0
+            for word in range(num_words):
+                key = (list(tag_counts.keys())[tag], vocab_keys[word])
                 count = emission_counts[key] if key in emission_counts else 0
-                count_tag = tag_counts[emis_keys[i][0]]
-                B[i, j] = (count + alpha) / (count_tag + alpha * num_words)
-        return B
+                emission_matrix[tag, word] = count + alpha
+                sum_rows += emission_matrix[tag, word]
+            emission_matrix[tag, :] /= sum_rows
+        return emission_matrix
 
     def initialize(self, states, tag_counts, A, B, corpus, vocab):
         num_tags = len(tag_counts)
