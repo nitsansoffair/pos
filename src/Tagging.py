@@ -111,6 +111,19 @@ class Tagging:
             pred[word - 1] = states[pos_tag_for_word]
         return pred
 
+    def compute_accuracy(self, pred, y):
+        num_correct = 0
+        total = 0
+        for prediction, y in zip(pred, y):
+            word_tag_tuple = y.split('\t')
+            if len(word_tag_tuple) != 2:
+                continue
+            word, tag = word_tag_tuple
+            if tag[:-1] == prediction:
+                num_correct += 1
+            total += 1
+        return num_correct / total
+
 if __name__ == '__main__':
     alpha = 0.001
     tagging = Tagging()
@@ -130,4 +143,5 @@ if __name__ == '__main__':
     emission_matrix = tagging.create_emission_matrix(alpha, tag_counts, emission_counts, vocab)
     best_probs, best_paths = tagging.initialize(states, tag_counts, transitions, emission_matrix, corpus, vocab)
     tagging.viterbi_forward(transitions, emission_matrix, corpus, best_probs, best_paths, vocab)
-    tagging.viterbi_backward(best_probs, best_paths, corpus, states)
+    pred = tagging.viterbi_backward(best_probs, best_paths, corpus, states)
+    tagging.compute_accuracy(pred, testing_corpus)
