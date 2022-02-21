@@ -26,14 +26,15 @@ class Tagging:
 
     def predict_pos(self, prep, y, emission_counts, vocab, states):
         num_correct, total = 0, len(y)
-        for word, y_tup in zip(prep, y):
+        for word_tag, y_tup in zip(prep, y):
             y_tup_l = y_tup.split()
             if len(y_tup_l) == 2:
                 true_label = y_tup_l[1]
             else:
                 continue
             pos_final, count_final = '', 0
-            if word in vocab:
+            word = word_tag.split('\t')[0]
+            if word in list(vocab.keys()):
                 for pos in states:
                     key = (pos, word)
                     if key in emission_counts.keys():
@@ -134,11 +135,11 @@ class Tagging:
 if __name__ == '__main__':
     alpha = 0.001
     tagging = Tagging()
-    with open("../data/WSJ_02-21.pos", 'r') as f:
+    with open("../data/large/WSJ_02-21.pos", 'r') as f:
         training_corpus = f.readlines()
-    with open("../data/WSJ_24.pos", 'r') as f:
+    with open("../data/large/WSJ_24.pos", 'r') as f:
         testing_corpus = f.readlines()
-    with open("../data/hmm_vocab.txt", 'r') as f:
+    with open("../data/large/hmm_vocab.txt", 'r') as f:
         voc_l = f.read().split('\n')
     vocab = {}
     for i, word in enumerate(sorted(voc_l)):

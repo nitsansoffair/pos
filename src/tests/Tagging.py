@@ -13,9 +13,9 @@ class TaggingTest(unittest.TestCase):
     def test_create_dictionaries(self):
         tagging = Tagging()
         target = tagging.create_dictionaries
-        with open("../../data/WSJ_02-21.pos", 'r') as f:
+        with open("../../data/large/WSJ_02-21.pos", 'r') as f:
             training_corpus = f.readlines()
-        with open("../../data/hmm_vocab.txt", 'r') as f:
+        with open("../../data/large/hmm_vocab.txt", 'r') as f:
             voc_l = f.read().split('\n')
         vocab = {}
         for i, word in enumerate(sorted(voc_l)):
@@ -85,19 +85,37 @@ class TaggingTest(unittest.TestCase):
             for k, v in test_case["expected"]["tag_counts"].items():
                 self.assertEqual(True, np.isclose(result_tag[k], v))
 
+    def test_create_dictionaries_small(self):
+        tagging = Tagging()
+        with open("../../data/small/tag_small.pos", 'r') as f:
+            training_corpus = f.readlines()
+        with open("../../data/small/vocab_small.txt", 'r') as f:
+            voc_l = f.read().split('\n')
+        vocab = {}
+        for i, word in enumerate(sorted(voc_l)):
+            vocab[word] = i
+        result_emission, result_transition, result_tag = tagging.create_dictionaries(training_corpus, vocab)
+        self.assertEqual(list(result_tag.keys()), ['NN', 'IN', 'DT', '.', 'CC', 'JJ', 'VBZ', 'VBN', 'TO', 'NNS', 'VB'])
+        self.assertEqual(list(result_tag.values()), [4, 3, 3, 1, 1, 3, 1, 1, 2, 1, 1])
+        self.assertEqual(list(result_transition.keys()), [('--s--', 'NN'), ('NN', 'IN'), ('IN', 'DT'), ('DT', 'NN'),
+                                                          ('NN', '.'), ('.', 'CC'), ('CC', 'DT'), ('DT', 'JJ'), ('JJ', 'NN'),
+                                                          ('NN', 'VBZ'), ('VBZ', 'VBN'), ('VBN', 'TO'), ('TO', 'NNS'),
+                                                          ('NNS', 'TO'), ('TO', 'VB'), ('VB', 'JJ'), ('JJ', 'IN')])
+        self.assertEqual(list(result_transition.values()), [1, 2, 2, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1])
+
     def test_predict_pos(self):
         tagging = Tagging()
         target = tagging.predict_pos
-        with open("../../data/WSJ_02-21.pos", 'r') as f:
+        with open("../../data/large/WSJ_02-21.pos", 'r') as f:
             training_corpus = f.readlines()
-        with open("../../data/hmm_vocab.txt", 'r') as f:
+        with open("../../data/large/hmm_vocab.txt", 'r') as f:
             voc_l = f.read().split('\n')
-        with open("../../data/WSJ_24.pos", 'r') as f:
+        with open("../../data/large/WSJ_24.pos", 'r') as f:
             y = f.readlines()
         vocab = {}
         for i, word in enumerate(sorted(voc_l)):
             vocab[word] = i
-        _, prep = preprocess(vocab, "../../data/test.words")
+        _, prep = preprocess(vocab, "../../data/large/test.words")
         emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
         states = sorted(tag_counts.keys())
         test_cases = [
@@ -128,12 +146,25 @@ class TaggingTest(unittest.TestCase):
             result = target(**test_case["input"])
             self.assertEqual(True, np.isclose(result, test_case["expected"]))
 
+    def test_predict_pos_small(self):
+        tagging = Tagging()
+        with open("../../data/small/tag_small.pos", 'r') as f:
+            training_corpus = f.readlines()
+        with open("../../data/small/vocab_small.txt", 'r') as f:
+            voc_l = f.read().split('\n')
+        vocab = {}
+        for i, word in enumerate(sorted(voc_l)):
+            vocab[word] = i
+        emission_counts, _, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
+        prediction = tagging.predict_pos(training_corpus, training_corpus, emission_counts, vocab, sorted(tag_counts.keys()))
+        self.assertEqual(prediction, 1)
+
     def test_create_transition_matrix(self):
         tagging = Tagging()
         target = tagging.create_transition_matrix
-        with open("../../data/WSJ_02-21.pos", 'r') as f:
+        with open("../../data/large/WSJ_02-21.pos", 'r') as f:
             training_corpus = f.readlines()
-        with open("../../data/hmm_vocab.txt", 'r') as f:
+        with open("../../data/large/hmm_vocab.txt", 'r') as f:
             voc_l = f.read().split('\n')
         vocab = {}
         for i, word in enumerate(sorted(voc_l)):
@@ -327,9 +358,9 @@ class TaggingTest(unittest.TestCase):
     def test_create_emission_matrix(self):
         tagging = Tagging()
         target = tagging.create_emission_matrix
-        with open("../../data/WSJ_02-21.pos", 'r') as f:
+        with open("../../data/large/WSJ_02-21.pos", 'r') as f:
             training_corpus = f.readlines()
-        with open("../../data/hmm_vocab.txt", 'r') as f:
+        with open("../../data/large/hmm_vocab.txt", 'r') as f:
             voc_l = f.read().split('\n')
         vocab = {}
         for i, word in enumerate(sorted(voc_l)):
@@ -526,9 +557,9 @@ class TaggingTest(unittest.TestCase):
     def test_initialize(self):
         tagging = Tagging()
         target = tagging.initialize
-        with open("../../data/WSJ_02-21.pos", 'r') as f:
+        with open("../../data/large/WSJ_02-21.pos", 'r') as f:
             training_corpus = f.readlines()
-        with open("../../data/hmm_vocab.txt", 'r') as f:
+        with open("../../data/large/hmm_vocab.txt", 'r') as f:
             voc_l = f.read().split('\n')
         vocab = {}
         for i, word in enumerate(sorted(voc_l)):
@@ -577,9 +608,9 @@ class TaggingTest(unittest.TestCase):
     def test_viterbi_forward(self):
         tagging = Tagging()
         target = tagging.viterbi_forward
-        with open("../../data/WSJ_02-21.pos", 'r') as f:
+        with open("../../data/large/WSJ_02-21.pos", 'r') as f:
             training_corpus = f.readlines()
-        with open("../../data/hmm_vocab.txt", 'r') as f:
+        with open("../../data/large/hmm_vocab.txt", 'r') as f:
             voc_l = f.read().split('\n')
         vocab = {}
         for i, word in enumerate(sorted(voc_l)):
@@ -642,9 +673,9 @@ class TaggingTest(unittest.TestCase):
     def test_viterbi_backward(self):
         tagging = Tagging()
         target = tagging.viterbi_backward
-        with open("../../data/WSJ_02-21.pos", 'r') as f:
+        with open("../../data/large/WSJ_02-21.pos", 'r') as f:
             training_corpus = f.readlines()
-        with open("../../data/hmm_vocab.txt", 'r') as f:
+        with open("../../data/large/hmm_vocab.txt", 'r') as f:
             voc_l = f.read().split('\n')
         vocab = {}
         for i, word in enumerate(sorted(voc_l)):
@@ -683,11 +714,11 @@ class TaggingTest(unittest.TestCase):
         tagging = Tagging()
         target = tagging.compute_accuracy
         alpha = 0.001
-        with open("../../data/WSJ_24.pos", 'r') as f:
+        with open("../../data/large/WSJ_24.pos", 'r') as f:
             test_data = f.readlines()
-        with open("../../data/WSJ_02-21.pos", 'r') as f:
+        with open("../../data/large/WSJ_02-21.pos", 'r') as f:
             train_data = f.readlines()
-        with open("../../data/hmm_vocab.txt", 'r') as f:
+        with open("../../data/large/hmm_vocab.txt", 'r') as f:
             voc_l = f.read().split('\n')
         vocab = {}
         for i, word in enumerate(sorted(voc_l)):
