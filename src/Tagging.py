@@ -95,21 +95,20 @@ class Tagging:
         return best_probs, best_paths
 
     def viterbi_backward(self, best_probs, best_paths, corpus, states):
-        # todo: complete implementation
-        m = best_paths.shape[1]
-        z = [None] * m
+        last = best_paths.shape[1]
+        z = [None] * last
         num_tags = best_probs.shape[0]
         best_prob_for_last_word = float('-inf')
-        pred = [None] * m
+        pred = [None] * last
         for tag in range(num_tags):
-            if best_probs[tag] > best_prob_for_last_word:
-                best_prob_for_last_word = best_probs[tag]
-                z[m - 1] = corpus[tag]
-        pred[m - 1] = states[z[m - 1]]
-        for i in range(len(corpus), 1, 0):
-            pos_tag_for_word_i = corpus[i]
-            z[i - 1] = best_paths[states[i], corpus[i]]
-            pred[i - 1] = states[corpus[i]]
+            if best_probs[tag, last - 1] > best_prob_for_last_word:
+                best_prob_for_last_word = best_probs[tag, last - 1]
+                z[last - 1] = tag
+        pred[last - 1] = states[z[last - 1]]
+        for word in range(len(corpus) - 1, 0, -1):
+            pos_tag_for_word = np.argmax(best_probs[:, word], axis=0)
+            z[word - 1] = best_paths[pos_tag_for_word, word]
+            pred[word - 1] = states[pos_tag_for_word]
         return pred
 
 if __name__ == '__main__':

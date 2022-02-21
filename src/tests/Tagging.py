@@ -401,6 +401,45 @@ class TaggingTest(unittest.TestCase):
             self.assertEqual(True,
                              np.allclose(result_best_paths[30:35, 30:35], test_case["expected"]["best_paths30:35"]))
 
+    def test_viterbi_backward(self):
+        tagging = Tagging()
+        target = tagging.viterbi_backward
+        with open("../../data/WSJ_02-21.pos", 'r') as f:
+            training_corpus = f.readlines()
+        with open("../../data/hmm_vocab.txt", 'r') as f:
+            voc_l = f.read().split('\n')
+        vocab = {}
+        for i, word in enumerate(sorted(voc_l)):
+            vocab[word] = i
+        _, corpus = preprocess(vocab, "../../data/test.words")
+        _, _, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
+        states = list(tag_counts.keys())
+        test_cases = [
+            {
+                "name": "default_check",
+                "input": {
+                    "corpus": corpus,
+                    "best_probs": pickle.load(
+                        open("../../support_files/best_probs_trained.pkl", "rb")
+                    ),
+                    "best_paths": pickle.load(
+                        open("../../support_files/best_paths_trained.pkl", "rb")
+                    ),
+                    "states": states,
+                },
+                "expected": {
+                    "pred_len": 34199,
+                    "pred_head": ['VBZ', 'JJ', 'VBZ', '--s--', 'WRB', 'RP', ')', 'VBD', 'PRP$', 'PRP$'],
+                    "pred_tail": ['--s--', 'RBR', 'WRB', 'MD', 'RBR', ')', 'MD', 'POS', "''", "''"],
+                },
+            }
+        ]
+        for test_case in test_cases:
+            result = target(**test_case["input"])
+            self.assertEqual(True, isinstance(result, list))
+            self.assertEqual(True, len(result) == test_case["expected"]["pred_len"])
+            self.assertEqual(True, result[:10] == test_case["expected"]["pred_head"])
+            self.assertEqual(True, result[-10:] == test_case["expected"]["pred_tail"])
 
 if __name__ == '__main__':
     unittest.main()
