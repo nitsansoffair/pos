@@ -55,7 +55,6 @@ class Tagging:
         return transitions
 
     def create_emission_matrix(self, alpha, tag_counts, emission_counts, vocab):
-        # todo: validate
         num_tags, num_words = len(tag_counts), len(vocab.keys())
         B = np.zeros((num_tags, num_words))
         emis_keys, vocab_keys = list(emission_counts.keys()), list(vocab.keys())
