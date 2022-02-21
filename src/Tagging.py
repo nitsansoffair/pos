@@ -67,7 +67,6 @@ class Tagging:
         return B
 
     def initialize(self, states, tag_counts, A, B, corpus, vocab):
-        # todo: validate
         num_tags = len(tag_counts)
         best_probs = np.zeros((num_tags, len(corpus)))
         best_paths = np.zeros((num_tags, len(corpus)), dtype=int)
