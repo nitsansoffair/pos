@@ -46,7 +46,6 @@ class Tagging:
         return num_correct / total
 
     def create_transition_matrix(self, alpha, tag_counts, transition_counts):
-        # todo: fix this function
         tags_keys, total_tags = list(tag_counts.keys()), len(tag_counts.keys())
         transitions = np.zeros((total_tags, total_tags))
         for source in range(total_tags):
@@ -60,7 +59,6 @@ class Tagging:
         return transitions
 
     def create_emission_matrix(self, alpha, tag_counts, emission_counts, vocab):
-        # todo: fix this function
         num_tags, num_words = len(tag_counts), len(vocab.keys())
         emission_matrix = np.zeros((num_tags, num_words))
         emis_keys, vocab_keys = list(emission_counts.keys()), list(vocab.keys())
@@ -68,7 +66,7 @@ class Tagging:
             sum_rows = 0
             for word in range(num_words):
                 key = (list(tag_counts.keys())[tag], vocab_keys[word])
-                count = emission_counts[key] if key in emission_counts else 0
+                count = emission_counts[key] if key in emission_counts.keys() else 0
                 emission_matrix[tag, word] = count + alpha
                 sum_rows += emission_matrix[tag, word]
             emission_matrix[tag, :] /= sum_rows
