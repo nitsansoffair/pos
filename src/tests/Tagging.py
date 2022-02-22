@@ -253,6 +253,41 @@ class TaggingTest(unittest.TestCase):
             self.assertEqual(True, result_best_paths.shape == test_case["expected"]["best_paths_shape"])
             self.assertEqual(True, np.all((result_best_paths == 0)))
 
+    def test_initialize2(self):
+        tagging = Tagging()
+        with open("../../data/small/tag_small.pos", 'r') as f:
+            training_corpus = f.readlines()
+        with open("../../data/small/vocab_small.txt", 'r') as f:
+            voc_l = f.read().split('\n')
+        vocab = {}
+        for i, word in enumerate(sorted(voc_l)):
+            vocab[word] = i
+        _, corpus = preprocess(vocab, "../../data/small/train.words")
+        emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
+        transitions = tagging.create_transition_matrix(0.001, tag_counts, transition_counts)
+        emission_matrix = tagging.create_emission_matrix(0.001, tag_counts, emission_counts, vocab)
+        states = tags = list(tag_counts.keys())
+        best_probs, best_paths = tagging.initialize(states, tag_counts, transitions, emission_matrix, training_corpus, vocab,
+                                                    start_token="NN")
+        words = []
+        for tuple in training_corpus:
+            words.append(tuple.split('\t')[0])
+        df_probs = pd.DataFrame(best_probs[:, :1], index=tags[:], columns=words[:1])
+        true_probs = [[-7.60452014],
+                      [-0.69472957],
+                      [-7.45134578],
+                      [-1.38411267],
+                      [-6.69941463],
+                      [-7.45134578],
+                      [-1.38411267],
+                      [-6.69941463],
+                      [-7.20232163],
+                      [-6.69941463],
+                      [-0.0165869]]
+        for row in range(df_probs.shape[1]):
+            self.assertEqual(True, abs(true_probs[row][0] - best_probs[row, 0]) < .01)
+        self.assertEqual(0, np.sum(best_paths[:, :1], axis=0))
+
     def test_viterbi_forward(self):
         tagging = Tagging()
         target = tagging.viterbi_forward

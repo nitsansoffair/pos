@@ -72,16 +72,17 @@ class Tagging:
             emission_matrix[tag, :] /= sum_rows
         return emission_matrix
 
-    def initialize(self, states, tag_counts, A, B, corpus, vocab):
+    def initialize(self, states, tag_counts, transitions, emission_matrix, corpus, vocab, start_token="--s--"):
         num_tags = len(tag_counts)
         best_probs = np.zeros((num_tags, len(corpus)))
         best_paths = np.zeros((num_tags, len(corpus)), dtype=int)
-        s_idx = states.index("--s--")
-        for i in range(num_tags):
-            if A[0, i] == 0:
-                best_probs[i, 0] = float("-inf")
+        s_idx = states.index(start_token)
+        for tag in range(num_tags):
+            if transitions[0, tag] == 0:
+                best_probs[tag, 0] = float("-inf")
             else:
-                best_probs[i, 0] = log(A[s_idx, i] + B[i, vocab[corpus[0]]]) if A[s_idx, i] != 0 else float('-inf')
+                word = corpus[0].split('\t')[0]
+                best_probs[tag, 0] = log(transitions[s_idx, tag] + emission_matrix[tag, vocab[word]]) if transitions[s_idx, tag] != 0 else float('-inf')
         return best_probs, best_paths
 
     def viterbi_forward(self, A, B, test_corpus, best_probs, best_paths, vocab, verbose=True):
