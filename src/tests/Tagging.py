@@ -452,41 +452,30 @@ class TaggingTest(unittest.TestCase):
 
     def test_compute_accuracy(self):
         tagging = Tagging()
-        target = tagging.compute_accuracy
-        alpha = 0.001
-        with open("../../data/large/WSJ_24.pos", 'r') as f:
-            test_data = f.readlines()
-        with open("../../data/large/WSJ_02-21.pos", 'r') as f:
-            train_data = f.readlines()
-        with open("../../data/large/hmm_vocab.txt", 'r') as f:
+        with open("../../data/small/tag_small.pos", 'r') as f:
+            training_corpus = true_labels = f.readlines()
+        with open("../../data/small/vocab_small.txt", 'r') as f:
             voc_l = f.read().split('\n')
         vocab = {}
         for i, word in enumerate(sorted(voc_l)):
             vocab[word] = i
-        _, corpus = preprocess(vocab, "../../data/test.words")
-        emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(train_data, vocab)
-        states = sorted(tag_counts.keys())
-        transitions = tagging.create_transition_matrix(alpha, tag_counts, transition_counts)
-        emission_matrix = tagging.create_emission_matrix(alpha, tag_counts, emission_counts, vocab)
-        best_probs, best_paths = tagging.initialize(states, tag_counts, transitions, emission_matrix, corpus, vocab)
-        tagging.viterbi_forward(transitions, emission_matrix, corpus, best_probs, best_paths, vocab)
-        pred = tagging.viterbi_backward(best_probs, best_paths, corpus, states)
-        test_cases = [
-            {
-                "name": "default_check",
-                "input": {"pred": pred, "y": test_data},
-                "expected": 0.953063647155511,
-            },
-            {
-                "name": "small_check",
-                "input": {"pred": pred[:100], "y": test_data[:100]},
-                "expected": 0.979381443298969,
-            },
-        ]
-        for test_case in test_cases:
-            result = target(**test_case["input"])
-            self.assertEqual(True, isinstance(result, float))
-            self.assertEqual(True, np.isclose(result, test_case["expected"]))
+        _, train_corpus = preprocess(vocab, "../../data/small/train.words")
+        emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
+        transitions = tagging.create_transition_matrix(0.001, tag_counts, transition_counts)
+        emission_matrix = tagging.create_emission_matrix(0.001, tag_counts, emission_counts, vocab)
+        states = tags = list(tag_counts.keys())
+        words = []
+        for tuple in training_corpus:
+            words.append(tuple.split('\t')[0])
+        best_probs, best_paths = tagging.initialize(states, tag_counts, transitions, emission_matrix, training_corpus,
+                                                    vocab,
+                                                    start_token="NN")
+        best_probs, best_paths, tagging.viterbi_forward(transitions, emission_matrix, train_corpus,
+                                                        best_probs, best_paths, vocab)
+        predictions = tagging.viterbi_backward(best_probs, best_paths, train_corpus, states)
+        accuracy = tagging.compute_accuracy(predictions, true_labels)
+        self.assertEqual(True, 0 <= accuracy <= 1)
+        self.assertEqual(True, accuracy > .95)
 
 
 if __name__ == '__main__':

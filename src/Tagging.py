@@ -118,16 +118,14 @@ class Tagging:
             predictions[word - 1] = pos_tag_for_word
         return predictions
 
-    def compute_accuracy(self, pred, y):
-        num_correct = 0
-        total = 0
-        for prediction, y in zip(pred, y):
-            word_tag_tuple = y.split('\t')
+    def compute_accuracy(self, predictions, true_labels):
+        num_correct, total = 0, 0
+        for prediction, true_label in zip(predictions, true_labels):
+            word_tag_tuple = true_label.split('\t')
             if len(word_tag_tuple) != 2:
                 continue
             word, tag = word_tag_tuple
-            if tag[:-1] == prediction:
-                num_correct += 1
+            num_correct += 1 if tag[:-1] == prediction else 0
             total += 1
         return num_correct / total
 
