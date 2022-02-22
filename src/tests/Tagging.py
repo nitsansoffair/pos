@@ -267,7 +267,8 @@ class TaggingTest(unittest.TestCase):
         transitions = tagging.create_transition_matrix(0.001, tag_counts, transition_counts)
         emission_matrix = tagging.create_emission_matrix(0.001, tag_counts, emission_counts, vocab)
         states = tags = list(tag_counts.keys())
-        best_probs, best_paths = tagging.initialize(states, tag_counts, transitions, emission_matrix, training_corpus, vocab,
+        best_probs, best_paths = tagging.initialize(states, tag_counts, transitions, emission_matrix, training_corpus,
+                                                    vocab,
                                                     start_token="NN")
         words = []
         for tuple in training_corpus:
@@ -290,68 +291,54 @@ class TaggingTest(unittest.TestCase):
 
     def test_viterbi_forward(self):
         tagging = Tagging()
-        target = tagging.viterbi_forward
-        with open("../../data/large/WSJ_02-21.pos", 'r') as f:
+        with open("../../data/small/tag_small.pos", 'r') as f:
             training_corpus = f.readlines()
-        with open("../../data/large/hmm_vocab.txt", 'r') as f:
+        with open("../../data/small/vocab_small.txt", 'r') as f:
             voc_l = f.read().split('\n')
         vocab = {}
         for i, word in enumerate(sorted(voc_l)):
             vocab[word] = i
-        _, test_corpus = preprocess(vocab, "../../data/test.words")
+        _, test_corpus = preprocess(vocab, "../../data/large/test.words")
         emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
-        A = tagging.create_transition_matrix(0.001, tag_counts, transition_counts)
-        B = tagging.create_emission_matrix(0.001, tag_counts, emission_counts, vocab)
-        test_cases = [
-            {
-                "name": "default_check",
-                "input": {
-                    "A": A,
-                    "B": B,
-                    "test_corpus": test_corpus,
-                    "best_probs": pickle.load(
-                        open("../../support_files/best_probs_initilized.pkl", "rb")
-                    ),
-                    "best_paths": pickle.load(
-                        open("../../support_files/best_paths_initilized.pkl", "rb")
-                    ),
-                    "vocab": vocab,
-                    "verbose": False,
-                },
-                "expected": {
-                    "best_probs0:5": [[-22.60982633, -24.81569994, -40.98975291, -53.25491965, -70.17179432],
-                                      [-23.07660654, -24.37453926, -41.01527222, -52.66763772, -71.66260044],
-                                      [-23.57298822, -26.38711047, -43.54969854, -53.90344415, -72.73173994],
-                                      [-19.76726066, -26.13694219, -43.28506262, -52.8003639, -71.1596961],
-                                      [-24.74325104, -26.22230661, -43.01562103, -54.81607812, -56.70642324]],
-                    "best_probs30:35": [[-372.8198332, -379.28984239, -386.36087011, -398.20780805, -400.67550792],
-                                        [-370.24027947, -372.32981343, -383.96731574, -395.54277982, -408.25047519],
-                                        [-372.66124123, -379.364461, -387.01527579, -397.4392292, -410.4625349],
-                                        [-374.89370194, -379.28984239, -389.57878644, -397.07701182, -402.16668669],
-                                        [-374.30182204, -373.14523287, -387.07530008, -398.8498702, -413.00607316]],
-                    "best_paths0:5": [[0, 11, 9, 15, 9],
-                                      [0, 11, 40, 15, 9],
-                                      [0, 11, 9, 15, 9],
-                                      [0, 11, 16, 15, 37],
-                                      [0, 11, 9, 15, 1]],
-                    "best_paths30:35": [[12, 41, 29, 4, 4],
-                                        [12, 41, 29, 4, 4],
-                                        [15, 41, 29, 35, 27],
-                                        [15, 41, 29, 35, 27],
-                                        [15, 41, 29, 20, 20]],
-                },
-            }
-        ]
-        for test_case in test_cases:
-            result_best_probs, result_best_paths = target(**test_case["input"])
-            self.assertEqual(True, isinstance(result_best_probs, np.ndarray))
-            self.assertEqual(True, isinstance(result_best_paths, np.ndarray))
-            self.assertEqual(True, np.allclose(result_best_probs[0:5, 0:5], test_case["expected"]["best_probs0:5"]))
-            self.assertEqual(True,
-                             np.allclose(result_best_probs[30:35, 30:35], test_case["expected"]["best_probs30:35"], ))
-            self.assertEqual(True, np.allclose(result_best_paths[0:5, 0:5], test_case["expected"]["best_paths0:5"], ))
-            self.assertEqual(True,
-                             np.allclose(result_best_paths[30:35, 30:35], test_case["expected"]["best_paths30:35"]))
+        transitions = tagging.create_transition_matrix(0.001, tag_counts, transition_counts)
+        emission_matrix = tagging.create_emission_matrix(0.001, tag_counts, emission_counts, vocab)
+        states = tags = list(tag_counts.keys())
+        words = []
+        for tuple in training_corpus:
+            words.append(tuple.split('\t')[0])
+        best_probs, best_paths = tagging.initialize(states, tag_counts, transitions, emission_matrix, training_corpus,
+                                                    vocab,
+                                                    start_token="NN")
+        best_probs, best_paths, tagging.viterbi_forward(transitions, emission_matrix, test_corpus,
+                                                        best_probs, best_paths, vocab)
+        df_probs = pd.DataFrame(best_probs[:, :3], index=tags[:], columns=words[:3])
+        df_paths = pd.DataFrame(best_paths[:, :3], index=tags[:], columns=words[:3])
+        true_probs = [[-7.60452014e+00, -1.52338217e+01, -1.67460417e+01],
+                      [-6.94729571e-01, -1.49476318e+01, -1.71524994e+01],
+                      [-7.45134578e+00, -8.71206427e+00, -1.63419384e+01],
+                      [-1.38411267e+00, -6.95212254e+00, -2.07964130e+01],
+                      [-6.69941463e+00, -8.31964831e+00, -6.97890340e+00],
+                      [-7.45134578e+00, -8.03887698e+00, -1.71330391e+01],
+                      [-1.38411267e+00, -1.38608773e+01, -2.07964130e+01],
+                      [-6.69941463e+00, -8.31964831e+00, -2.07964130e+01],
+                      [-7.20232163e+00, -1.43192173e+01, -1.59394509e+01],
+                      [-6.69941463e+00, -1.38608773e+01, -2.07964130e+01],
+                      [-1.65869014e-02, -1.38608773e+01, -2.07964130e+01]]
+        true_paths = [[0, 10, 5],
+                      [0, 10, 5],
+                      [0, 1, 4],
+                      [0, 10, 3],
+                      [0, 3, 3],
+                      [0, 10, 2],
+                      [0, 10, 3],
+                      [0, 6, 3],
+                      [0, 7, 7],
+                      [0, 10, 3],
+                      [0, 10, 3]]
+        for row in range(best_probs.shape[0]):
+            for column in range(3):
+                self.assertEqual(True, abs(best_probs[row, column] - true_probs[row][column]) < .01)
+                self.assertEqual(True, abs(best_paths[row, column] - true_paths[row][column]) < .01)
 
     def test_viterbi_backward(self):
         tagging = Tagging()
