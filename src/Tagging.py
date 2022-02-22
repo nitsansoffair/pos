@@ -102,21 +102,21 @@ class Tagging:
         return best_probs, best_paths
 
     def viterbi_backward(self, best_probs, best_paths, corpus, states):
-        last = best_paths.shape[1]
-        z = [None] * last
+        # todo: find bug makes tests failures
+        last_word = best_paths.shape[1]
+        z = [None] * last_word
         num_tags = best_probs.shape[0]
         best_prob_for_last_word = float('-inf')
-        pred = [None] * last
+        predictions = [None] * last_word
         for tag in range(num_tags):
-            if best_probs[tag, last - 1] > best_prob_for_last_word:
-                best_prob_for_last_word = best_probs[tag, last - 1]
-                z[last - 1] = tag
-        pred[last - 1] = states[z[last - 1]]
-        for word in range(len(corpus) - 1, 0, -1):
-            pos_tag_for_word = np.argmax(best_probs[:, word], axis=0)
-            z[word - 1] = best_paths[pos_tag_for_word, word]
-            pred[word - 1] = states[pos_tag_for_word]
-        return pred
+            if best_probs[tag, last_word - 1] > best_prob_for_last_word:
+                best_prob_for_last_word, z[last_word - 1] = best_probs[tag, last_word - 1], tag
+        predictions[last_word - 1] = states[z[last_word - 1]]
+        for word in range(len(corpus) - 1, -1, -1):
+            tag_index = np.argmax(best_probs[:, word], axis=0)
+            pos_tag_for_word, z[word - 1] = states[tag_index], best_paths[tag_index, word]
+            predictions[word - 1] = pos_tag_for_word
+        return predictions
 
     def compute_accuracy(self, pred, y):
         num_correct = 0
