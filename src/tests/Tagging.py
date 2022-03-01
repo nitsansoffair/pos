@@ -737,7 +737,7 @@ class TaggingTest(unittest.TestCase):
                 self.assertEqual(True, abs(best_probs[row, column] - true_probs[row][column]) < .01)
                 self.assertEqual(True, abs(best_paths[row, column] - true_paths[row][column]) < .01)
 
-    def test_viterbi_backward1(self):
+    def test_viterbi_backward(self):
         tagging = Tagging()
         target = tagging.viterbi_backward
         with open("../../data/WSJ_02-21.pos", 'r') as f:
@@ -747,9 +747,9 @@ class TaggingTest(unittest.TestCase):
         vocab = {}
         for i, word in enumerate(sorted(voc_l)):
             vocab[word] = i
-        _, corpus = preprocess(vocab, "../../data/large/test.words")
-        _, _, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
-        states = list(tag_counts.keys())
+        emission_counts, transition_counts, tag_counts = tagging.create_dictionaries(training_corpus, vocab)
+        states = sorted(tag_counts.keys())
+        _, corpus = preprocess(vocab, "../../data/test.words")
         test_cases = [
             {
                 "name": "default_check",
@@ -796,6 +796,8 @@ class TaggingTest(unittest.TestCase):
             result = target(**test_case["input"])
             self.assertEqual(True, isinstance(result, list))
             self.assertEqual(True, len(result) == test_case["expected"]["pred_len"])
+            self.assertEqual(test_case["expected"]["pred_head"], result[:10])
+            self.assertEqual(test_case["expected"]["pred_tail"], result[-10:])
 
     def test_viterbi_backward2(self):
         tagging = Tagging()

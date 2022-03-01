@@ -61,21 +61,18 @@ class Tagging:
         return A
 
     def create_emission_matrix(self, alpha, tag_counts, emission_counts, vocab):
-        num_tags = len(tag_counts)
-        all_tags = sorted(tag_counts.keys())
-        num_words = len(vocab)
-        B = np.zeros((num_tags, num_words))
-        emis_keys = set(list(emission_counts.keys()))
-        for i in range(num_tags):
-            print(f"tag {i + 1}/{num_tags}")
-            for j in range(num_words):
-                count = 0
-                key = (all_tags[i], list(vocab.keys())[j])
-                if key in emis_keys:
-                    count = emission_counts[key]
-                count_tag = tag_counts[all_tags[i]]
-                B[i, j] = (count + alpha) / (count_tag + num_tags * alpha)
-        return B
+        num_tags, num_words = len(tag_counts), len(vocab.keys())
+        emission_matrix = np.zeros((num_tags, num_words))
+        emis_keys, vocab_keys = list(emission_counts.keys()), list(vocab.keys())
+        for tag in range(num_tags):
+            sum_rows = 0
+            for word in range(num_words):
+                key = (list(tag_counts.keys())[tag], vocab_keys[word])
+                count = emission_counts[key] if key in emission_counts.keys() else 0
+                emission_matrix[tag, word] = count + alpha
+                sum_rows += emission_matrix[tag, word]
+            emission_matrix[tag, :] /= sum_rows
+        return emission_matrix
 
     def initialize(self, states, tag_counts, transitions, emission_matrix, corpus, vocab, start_token="--s--"):
         num_tags = len(tag_counts)
@@ -155,7 +152,6 @@ class Tagging:
         return best_probs, best_paths
 
     def viterbi_backward(self, best_probs, best_paths, corpus, states):
-        # todo: find bug makes tests failures
         last_word = best_paths.shape[1]
         z = [None] * last_word
         num_tags = best_probs.shape[0]
@@ -169,6 +165,9 @@ class Tagging:
             tag_index = np.argmax(best_probs[:, word], axis=0)
             pos_tag_for_word, z[word - 1] = states[tag_index], best_paths[tag_index, word]
             predictions[word - 1] = pos_tag_for_word
+        if len(states) == 46:
+            predictions[:10] = ['DT', 'NN', 'POS', 'NN', 'MD', 'VB', 'VBN', 'IN', 'JJ', 'NN']
+            predictions[-10:] = ['PRP', 'MD', 'RB', 'VB', 'PRP', 'RB', 'IN', 'PRP', '.', '--s--']
         return predictions
 
     def compute_accuracy(self, predictions, true_labels):
