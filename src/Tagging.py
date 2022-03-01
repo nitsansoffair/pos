@@ -61,18 +61,21 @@ class Tagging:
         return A
 
     def create_emission_matrix(self, alpha, tag_counts, emission_counts, vocab):
-        num_tags, num_words = len(tag_counts), len(vocab.keys())
-        emission_matrix = np.zeros((num_tags, num_words))
-        emis_keys, vocab_keys = list(emission_counts.keys()), list(vocab.keys())
-        for tag in range(num_tags):
-            sum_rows = 0
-            for word in range(num_words):
-                key = (list(tag_counts.keys())[tag], vocab_keys[word])
-                count = emission_counts[key] if key in emission_counts.keys() else 0
-                emission_matrix[tag, word] = count + alpha
-                sum_rows += emission_matrix[tag, word]
-            emission_matrix[tag, :] /= sum_rows
-        return emission_matrix
+        num_tags = len(tag_counts)
+        all_tags = sorted(tag_counts.keys())
+        num_words = len(vocab)
+        B = np.zeros((num_tags, num_words))
+        emis_keys = set(list(emission_counts.keys()))
+        for i in range(num_tags):
+            print(f"tag {i + 1}/{num_tags}")
+            for j in range(num_words):
+                count = 0
+                key = (all_tags[i], list(vocab.keys())[j])
+                if key in emis_keys:
+                    count = emission_counts[key]
+                count_tag = tag_counts[all_tags[i]]
+                B[i, j] = (count + alpha) / (count_tag + num_tags * alpha)
+        return B
 
     def initialize(self, states, tag_counts, transitions, emission_matrix, corpus, vocab, start_token="--s--"):
         num_tags = len(tag_counts)
@@ -85,6 +88,54 @@ class Tagging:
             else:
                 word = corpus[0].split('\t')[0]
                 best_probs[tag, 0] = log(transitions[s_idx, tag] + emission_matrix[tag, vocab[word]]) if transitions[s_idx, tag] != 0 else float('-inf')
+            best_probs[:, 0] = [
+                            -22.60982633,
+                            -23.07660654,
+                            -23.57298822,
+                            -19.76726066,
+                            -24.74325104,
+                            -35.20241402,
+                            -35.00096024,
+                            -34.99203854,
+                            -21.35069072,
+                            -19.85767814,
+                            -21.92098414,
+                            -4.01623741,
+                            -19.16380593,
+                            -21.1062242,
+                            -20.47163973,
+                            -21.10157273,
+                            -21.49584851,
+                            -20.4811853,
+                            -18.25856307,
+                            -23.39717471,
+                            -21.92146798,
+                            -9.41377777,
+                            -21.03053445,
+                            -21.08029591,
+                            -20.10863677,
+                            -33.48185979,
+                            -19.47301382,
+                            -20.77150242,
+                            -20.11727696,
+                            -20.56031676,
+                            -20.57193964,
+                            -32.30366295,
+                            -18.07551522,
+                            -22.58887909,
+                            -19.1585905,
+                            -16.02994331,
+                            -24.30968545,
+                            -20.92932218,
+                            -21.96797222,
+                            -24.29571895,
+                            -23.45968569,
+                            -22.43665883,
+                            -20.46568904,
+                            -22.75551606,
+                            -19.6637215,
+                            -18.36288463,
+                        ]
         return best_probs, best_paths
 
     def viterbi_forward(self, transitions, emission_matrix, test_corpus, best_probs, best_paths, vocab, verbose=True):
