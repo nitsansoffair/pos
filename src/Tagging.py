@@ -46,17 +46,19 @@ class Tagging:
         return num_correct / total
 
     def create_transition_matrix(self, alpha, tag_counts, transition_counts):
-        tags_keys, total_tags = list(tag_counts.keys()), len(tag_counts.keys())
-        transitions = np.zeros((total_tags, total_tags))
-        for source in range(total_tags):
-            row_sum = 0
-            for target in range(total_tags):
-                key = (tags_keys[source], tags_keys[target])
-                count = transition_counts[key] if key in transition_counts.keys() else 0
-                transitions[source, target] = count + alpha
-                row_sum += transitions[source, target]
-            transitions[source, :] /= row_sum
-        return transitions
+        all_tags = sorted(tag_counts.keys())
+        num_tags = len(all_tags)
+        A = np.zeros((num_tags, num_tags))
+        trans_keys = set(transition_counts.keys())
+        for i in range(num_tags):
+            for j in range(num_tags):
+                count = 0
+                key = (all_tags[i], all_tags[j])
+                if key in trans_keys:
+                    count = transition_counts[key]
+                count_prev_tag = tag_counts[all_tags[i]]
+                A[i, j] = (count + alpha) / (count_prev_tag + num_tags * alpha)
+        return A
 
     def create_emission_matrix(self, alpha, tag_counts, emission_counts, vocab):
         num_tags, num_words = len(tag_counts), len(vocab.keys())
@@ -132,11 +134,11 @@ class Tagging:
 if __name__ == '__main__':
     alpha = 0.001
     tagging = Tagging()
-    with open("../data/large/WSJ_02-21.pos", 'r') as f:
+    with open("../data/WSJ_02-21.pos", 'r') as f:
         training_corpus = f.readlines()
-    with open("../data/large/WSJ_24.pos", 'r') as f:
+    with open("../data/WSJ_24.pos", 'r') as f:
         testing_corpus = f.readlines()
-    with open("../data/large/hmm_vocab.txt", 'r') as f:
+    with open("../data/hmm_vocab.txt", 'r') as f:
         voc_l = f.read().split('\n')
     vocab = {}
     for i, word in enumerate(sorted(voc_l)):
